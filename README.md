@@ -1,5 +1,5 @@
 # DispatchPi
-## A wifi-powered and energy efficient e-paper picture frame
+## A connected and efficient e-paper picture frame
 
 There are two folders to browse here:
 
