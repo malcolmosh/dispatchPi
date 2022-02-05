@@ -1,6 +1,9 @@
 # dispatchPi
 ## A communicating e-paper picture frame, powered by a Raspberry Pi Zero
 
+
+[](https://i.imgur.com/E302Bw2.jpg | width=200)
+
 The frame's job is to display an image from a fixed URL at specific intervals. There is a Flask app hosted at this address. Whenever it is pinged, it pulls the latest image received in a Gmail inbox, with the help of the Gmail API and Auth 2.0.
 
 There are two folders to browse here:
