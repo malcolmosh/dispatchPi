@@ -1,6 +1,8 @@
 # dispatchPi
 ## A communicating e-paper picture frame, powered by a Raspberry Pi Zero
 
+An easy solution to swap pictures with a friend, using the Gmail API. 
+
 
 <img src="https://i.imgur.com/E302Bw2.jpg|width=100px" width="200">
 
