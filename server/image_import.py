@@ -37,8 +37,16 @@ def pull_attachment(identifiant, creds):
 
         for parts in message_content['payload']['parts']:
             #get text embedded in email content
+            
+            #if part has another part
             if "parts" in parts:
                 data=(base64.urlsafe_b64decode((parts["parts"][0]["body"]["data"]).encode("ASCII")).decode("utf-8").replace('\r\n', ''))
+                #remove text between brackets
+                data=re.sub(r'\[.*?\]', ' ', data)
+                
+            #else if parts are not recursive
+            elif parts['mimeType']=='text/plain':
+                data=(base64.urlsafe_b64decode((parts["body"]["data"]).encode("ASCII")).decode("utf-8").replace('\r\n', ''))
                 #remove text between brackets
                 data=re.sub(r'\[.*?\]', ' ', data)
                 
