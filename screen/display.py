@@ -25,8 +25,11 @@ def show_image(image):
         display.sleep()
 
 try:
-    #get web link
-    filename="https://dispatchpi-o4pjbzwqdq-nn.a.run.app/satellite_frame"
+    # get web link
+    # don't forget to point to the proper frame
+    filename="https://YOUR_CLOUD_RUN_WEBSITE.a.run.app/satellite_frame"
+
+    # URL could also be https://YOUR_CLOUD_RUN_WEBSITE.a.run.app/earth_frame
     
     #pull image from web
     response = requests.get(filename, stream=True)

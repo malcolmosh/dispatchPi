@@ -66,7 +66,7 @@ def pull_and_display_image(initiator, creds):
   
   # initialize connector
   gmail_inbox =  Gmail_connector(creds=creds)
-  gmail_inbox.satellite_emails = ["omega_16_90@hotmail.com"]
+  gmail_inbox.satellite_emails = ["EMAIL_USED_BY_SATELLITE_FRAME"]
 
   # pull attachments
   gmail_inbox.pull_attachments(userID='me')
