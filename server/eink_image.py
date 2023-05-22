@@ -2,14 +2,16 @@ import os
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import textwrap
 
+
+
 #function to transform the pic pulled from gmail into a 2 tone & resized image
 class Image_transform:
     def __init__(self, imported_image, fit="crop", message=""):
         self.imported_image=imported_image
-        self.fit=fit
         self.message=message
 
-    def render(self):
+    def render(self, fit="crop"):
+        # fit can be "width" or "crop" or "height"
         #we are using the screen in portrait mode and so flipping the default landscape mode
         w = 480
         h = 800
@@ -28,7 +30,7 @@ class Image_transform:
         image = ImageOps.exif_transpose(image)
         
         #option 1 : fit the whole width to the frame
-        if self.fit=="width":
+        if fit=="width":
             #Resize image to fit width
             wpercent = (w/float(image.size[0]))
             hsize = int((float(image.size[1])*float(wpercent)))
@@ -42,7 +44,7 @@ class Image_transform:
             canvas.paste(image, (0, 0+adjust_height))
 
         #option 2 : fit the whole height to the frame
-        if self.fit=="height":
+        if fit=="height":
             
             #Resize image by height
             hpercent = (h/float(image.size[1]))
@@ -56,7 +58,7 @@ class Image_transform:
             canvas.paste(image, (0, 0+adjust_height))
 
         #option 3 : crop the image in the center 
-        if self.fit=="crop":
+        if fit=="crop":
         
             #Resize image by height
             hpercent = (h/float(image.size[1]))

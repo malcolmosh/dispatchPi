@@ -1,5 +1,5 @@
 import os
-import sys
+#import sys
 import requests
 from waveshare_epd import epd7in5_V2
 from PIL import Image
@@ -7,7 +7,6 @@ import glob, random
 
 #import local functions
 from image_transform_local import Image_transform
-
 
 #function to display image
 def show_image(image):
@@ -27,7 +26,7 @@ def show_image(image):
 
 try:
     #get web link
-    filename="INSERT LINK URL"
+    filename="https://dispatchpi-o4pjbzwqdq-nn.a.run.app/satellite_frame"
     
     #pull image from web
     response = requests.get(filename, stream=True)
@@ -52,8 +51,8 @@ except:
     random_image = random.choice(images)
 
     #run the local function to process and display it
-    local_image=Image_transform(imported_image=random_image, fit="crop", message="")
-    image=local_image.render()
+    local_image=Image_transform(imported_image=random_image)
+    image=local_image.render(fit="crop")
     show_image(image)
 
 

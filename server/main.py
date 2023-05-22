@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-# version v0.1
+# -*- Code revised May 2023. Olivier Simard-Hanley. -*-
+# this is the main file for the DispatchPi flask app
 
 import os
 import flask
@@ -14,11 +14,11 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
 #local functions
-from image_transform import Image_transform
-from image_import import pull_attachment
+from eink_image import Image_transform
+from gmail_connector import Gmail_connector
 
 
-##SECRETS
+##SECRETS  - change the file paths as needed
 
 #Path to your API credentials file
 CLIENT_SECRETS_FILE = "secrets/client_secret.json"
@@ -36,121 +36,125 @@ API_SERVICE_NAME = 'gmail'
 
 ##FLASK APP
 app = flask.Flask(__name__)
-
-#use https for URLs
-class ReverseProxied(object):
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        scheme = environ.get('HTTP_X_FORWARDED_PROTO')
-        if scheme:
-            environ['wsgi.url_scheme'] = scheme
-        return self.app(environ, start_response)
-        
-app.wsgi_app = ReverseProxied(app.wsgi_app)
-
+   
 # Flask app key (so that session parameters work)
 with open(FLASK_KEY) as secrets_file:
     key_file = json.load(secrets_file)
     app.secret_key = key_file['SECRET_KEY']
 
+
+def generate_credentials():
+  #if there are stored credentials, retrieve them
+  credentials = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+  
+  #if credentials are expired, refresh
+  if not credentials.valid:
+    credentials.refresh(Request())
+    print("Credentials refreshed!")
+        
+    #Save credentials to file if they were refreshed 
+    with open(TOKEN_FILE, 'w') as token:
+      token.write(credentials.to_json())
+      print("Credentials saved to file!")
+
+  return credentials
+  
+def pull_and_display_image(initiator, creds):
+
+  #import image from the gmail API
+  #credentials = Credentials.from_authorized_user_file('secrets/token.json', SCOPES)
+  
+  # initialize connector
+  gmail_inbox =  Gmail_connector(creds=creds)
+  gmail_inbox.satellite_emails = ["omega_16_90@hotmail.com"]
+
+  # pull attachments
+  gmail_inbox.pull_attachments(userID='me')
+
+  # get the image to send
+  image_to_send, output_text = gmail_inbox.grab_first_image(initiator=initiator, userID = 'me')
+ 
+  #transform image into a low res format for the eink screen
+  transformed_image = Image_transform(imported_image=image_to_send, fit="crop", message=output_text)
+  transformed_image = transformed_image.render()
+  output = BytesIO()
+  transformed_image.save(output, "PNG")
+    
+  # display the image (don't cache it)
+  # output.seek resets the pointer to the beginning of the file 
+  output.seek(0)
+  return output
+  
+
+# define the index
 @app.route('/')
 def index():
-  return print_index_table()
 
+  return ('<table>' + 
+          "<tr><td><a href='/satellite_frame''>See the satellite's frame</a></td>" +
+          "<tr><td><a href='/earth_frame'>See the earth's frame</a></td>" +
+          '<tr><td><a href="/authorize">Test the auth flow directly. You will be sent back to the index</a></td>' +
+          '<tr><td><a href="/revoke">Revoke current credentials</a></td>' +
+          '</td></tr></table>')
 
-@app.route('/north')
-def api_route_north():
+# define view for the satellite frame
+@app.route('/satellite_frame')
+def api_route_satellite_frame():
   
+  #update refresh token if we have a token file
   if os.path.exists(TOKEN_FILE):
-      #if there are stored credentials, retrieve them
-      credentials = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-      
-        #if credentials are expired, refresh
-      if not credentials.valid:
-           credentials.refresh(Request())
-                
-           #Save credentials to file if they were refreshed 
-           with open(TOKEN_FILE, 'w') as token:
-                 token.write(credentials.to_json())
-
+    credentials = generate_credentials()
+  
   #if there are no credentials, redirect to the authorization flow 
   else:
-     #set the session user to where we want the auth flow to redirect
-     flask.session['view']="north"
+     #create a session parameter to send the user to the right view after the auth flow
+     flask.session['view']="satellite_frame"
      return flask.redirect('authorize')
-  
-  #import image from the gmail API
-  #credentials = Credentials.from_authorized_user_file('secrets/token.json', SCOPES)
-  image_to_send,output_text = pull_attachment(identifiant="north", creds=credentials)
-    
-  #transform image into a low res format for the eink screen
-  transformed_image = Image_transform(imported_image=image_to_send, fit="crop", message=output_text)
-  transformed_image = transformed_image.render()
-  output = BytesIO()
-  transformed_image.save(output, "PNG")
-    
-  #display the image (don't cache it)
-  output.seek(0)
-  return send_file(output, mimetype="image/png", cache_timeout=0)
 
-@app.route('/south')
-def api_route_south():
+  #pull and display image
+  output = pull_and_display_image(initiator = "satellite_frame", creds = credentials)
+  return send_file(output, mimetype="image/png")
 
-  
+
+# define view for the earth frame
+@app.route('/earth_frame')
+def api_route_earth_frame():
+
+  #update refresh token if we have a token file
   if os.path.exists(TOKEN_FILE):
-      #if there are stored credentials, retrieve them
-      credentials = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-      
-        #if credentials are expired, refresh
-      if not credentials.valid:
-           credentials.refresh(Request())
-           
-           #Save credentials to file if they were refreshed 
-           with open(TOKEN_FILE, 'w') as token:
-                 token.write(credentials.to_json())
-
-  #if there are no credentials, redirect to the authorization flow 
-  #set the session user to where we want the auth flow to redirect
-  else:
-     flask.session['view']="south"
-     return flask.redirect('authorize')
+    credentials = generate_credentials()
   
-  #import image from the gmail API
-  #credentials = Credentials.from_authorized_user_file('secrets/token.json', SCOPES)
-  image_to_send,output_text = pull_attachment(identifiant="south", creds=credentials)
-    
-  #transform image into a low res format for the eink screen
-  transformed_image = Image_transform(imported_image=image_to_send, fit="crop", message=output_text)
-  transformed_image = transformed_image.render()
-  output = BytesIO()
-  transformed_image.save(output, "PNG")
-    
-  #display the image (don't cache it)
-  output.seek(0)
-  return send_file(output, mimetype="image/png", cache_timeout=0)
+  #if there are no credentials, redirect to the authorization flow 
+  else:
+     #create a session parameter to send the user to the right view after the auth flow
+     flask.session['view']="earth_frame"
+     return flask.redirect('authorize')
+
+  #pull and display image
+  output = pull_and_display_image(initiator = "earth_frame", creds = credentials)
+  return send_file(output, mimetype="image/png")
 
 
+# build the authorization flow
 @app.route('/authorize')
 def authorize():
     
-  #if testing the auth flow directly, choose a view
+  #if testing the auth flow directly, send to the index
   if 'view' not in flask.session:
-      flask.session['view']="north"
-  
+      flask.session['view']="index"
+
   #if we are just testing the auth flow and the credentials are expired, simply refresh them
-  if  os.path.exists(TOKEN_FILE):
+  if os.path.exists(TOKEN_FILE):
       credentials = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
       if not credentials.valid:
-              credentials.refresh(Request())
-             
-              #Save credentials to file if they were refreshed 
-              with open(TOKEN_FILE, 'w') as token:
-                    token.write(credentials.to_json())
-              
+          credentials.refresh(Request())
+
+          #Save credentials to file if they were refreshed
+          with open(TOKEN_FILE, 'w') as token:
+              token.write(credentials.to_json())
+
       return flask.redirect(flask.url_for('index'))
-     
+    
   #otherwise fetch the full creds
   else: 
       # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
@@ -175,7 +179,7 @@ def authorize():
 
       return flask.redirect(authorization_url)
 
-
+# define the callback
 @app.route('/oauth2callback')
 def oauth2callback():
   # Specify the state when creating the flow in the callback so that it can
@@ -197,15 +201,10 @@ def oauth2callback():
   with open(TOKEN_FILE, 'w') as token:
       token.write(credentials.to_json())
 
-  if flask.session['view']=="north":
-      return flask.redirect(flask.url_for('api_route_north'))
-  
-  elif flask.session['view']=="south":
-      return flask.redirect(flask.url_for('api_route_south'))
-
+  return flask.redirect(flask.url_for('index'))
 
 #revoke the credentials : remove the app from authorized apps
-#this will reset the refresh token
+#this will reset the refresh token, you'll have to erase the token file to start over
 @app.route('/revoke')
 def revoke():
 
@@ -217,29 +216,34 @@ def revoke():
 
   status_code = getattr(revoke, 'status_code')
   if status_code == 200:
-    return('Credentials successfully revoked.' + print_index_table())
+    return('Credentials successfully revoked.' + index())
+    
   else:
-    return('An error occurred.' + print_index_table())
-
-
-def print_index_table():
-  return ('<table>' +
-          '<tr><td><a href="/north">View from the north</a></td>' +
-          '<td>See the latest picture received in the north.</td></tr>' +
-          '<tr><td><a href="/south">View from the south</a></td>' +
-          '<td>See the latest picture received in the south.</td></tr>' +
-          '<tr><td><a href="/authorize">Test the auth flow directly.</a></td>' +
-          '<td>Go directly to the authorization flow. You will be sent back to the index.</td></tr>' +
-          '<tr><td><a href="/revoke">Revoke current credentials</a></td>' +
-          '<td>Revoke the access token.' +
-          '</td></tr></table>')
+    return('An error occurred.' + index())
 
 if __name__ == '__main__':
-   #When running locally, disable OAuthlib's HTTPs verification.
-   #ACTION ITEM for developers:
-    #   When running in production *do not* leave this option enabled.
-  #os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+  #   When running locally, disable OAuthlib's HTTPs verification.
+  #   When running in production *do not* leave this option enabled.
+  os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
    #Specify a hostname and port that are set as a valid redirect URI
    #for your API project in the Google API Console.
-  app.run('localhost', 8080, debug=False)
+   #set debug to true when testing locally
+  app.run('localhost', 8080, debug=True)
+
+else:
+  # When running online, use HTTPS for URLs
+  # The lines below should be disabled if you are testing the code locally
+  # This is handled by the if name == main block above
+  class ReverseProxied(object):
+      def __init__(self, app):
+          self.app = app
+
+      def __call__(self, environ, start_response):
+          scheme = environ.get('HTTP_X_FORWARDED_PROTO')
+          if scheme:
+              environ['wsgi.url_scheme'] = scheme
+          return self.app(environ, start_response)
+          
+  app.wsgi_app = ReverseProxied(app.wsgi_app)
+

@@ -10,19 +10,19 @@ RUN apk update && apk add \
     jpeg-dev \
     zlib-dev \
     libjpeg \
-    python3-dev
+    python3-dev 
 
 # Codebase setup
-RUN mkdir /picframe/
-WORKDIR /picframe/
+RUN mkdir /app/
+WORKDIR /app/
 
-# Add code
-ENV PYTHONPATH /picframe/server
-ADD . /picframe/
+# Add all code
+ENV PYTHONPATH /dispatchpi
+ADD . /app/
 
 # Install dependencies into this container so there's no need to 
 # install anything at container run time.
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --upgrade
 
 # Service must listen to $PORT environment variable.
 # This default value facilitates local development.

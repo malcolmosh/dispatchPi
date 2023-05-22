@@ -1,0 +1,4 @@
+textwrap
+RPi.GPIO
+spidev
+pillow_heif
