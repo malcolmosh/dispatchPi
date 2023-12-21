@@ -42,12 +42,12 @@ try:
 
 #if an error occurs (connection slow or missing), print a random local picture instead
 except:
-
     #set the directory
-    directory = os.path.join(os.path.dirname(__file__), "pics")
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    pic_path = os.path.join(dir_path, "pics")
 
     #set the filetypes to pick from (here, heic and jpg)
-    file_path_type = [(directory+"/*.heic"), (directory+"/*.jpg")]
+    file_path_type = [(pic_path+"/*.png"), (pic_path+"/*.jpg")]
     images = glob.glob(random.choice(file_path_type))
 
     #choose a random image path
@@ -57,5 +57,3 @@ except:
     local_image=Image_transform(imported_image=random_image)
     image=local_image.render(fit="crop")
     show_image(image)
-
-
