@@ -14,5 +14,5 @@ There are two folders to browse here:
 
 **Diagram**
 
-<img src="https://malcolmosh.github.io/assets/frame_diagram.png|width=800px">
+<img src="https://malcolmosh.github.io/assets/frame_diagram.png" width=800px>
 
