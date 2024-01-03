@@ -7,8 +7,9 @@
 
 The e-ink frame displays an image pulled from a fixed URL at regular intervals. At this URL resides a Flask app hosted on Google Cloud Run. Whenever it is pinged, it pulls the latest image received in a Gmail inbox and overlays text extracted from that same message. 
 
-**Diagram** 
-<img src="https://malcolmosh.github.io/assets/frame_diagram.png" width="400">
+**Diagram** à
+
+<img src="https://malcolmosh.github.io/assets/frame_diagram.png" width="800px">
 
 There are two folders to browse here:
 
