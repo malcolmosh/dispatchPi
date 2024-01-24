@@ -15,17 +15,18 @@ from google.auth.transport.requests import Request
 
 #local functions
 from eink_image import Image_transform
-from gmail_connector import Gmail_connector
+from gmail_connector import GmailConnector
 
 
-##SECRETS  - change the file paths as needed
+# find script directory
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 #Path to your API credentials file
-CLIENT_SECRETS_FILE = "secrets/client_secret.json"
+CLIENT_SECRETS_FILE = os.path.join(dir_path, "secrets/client_secret.json")
 #Path to your API Access token file
-TOKEN_FILE = 'secrets/token.json'
+TOKEN_FILE =  os.path.join(dir_path, 'secrets/token.json')
 #Path to your Flask app key
-FLASK_KEY='secrets/flask_key.json'
+FLASK_KEY= os.path.join(dir_path, 'secrets/flask_key.json')
 
 ##AUTH
 
@@ -59,20 +60,16 @@ def generate_credentials():
 
   return credentials
   
-def pull_and_display_image(initiator, creds):
-
-  #import image from the gmail API
-  #credentials = Credentials.from_authorized_user_file('secrets/token.json', SCOPES)
+def pull_and_display_image(target, creds):
   
   # initialize connector
-  gmail_inbox =  Gmail_connector(creds=creds)
-  gmail_inbox.satellite_emails = ["EMAIL_USED_BY_SATELLITE_FRAME"]
+  gmail_inbox =  GmailConnector(creds=creds, length_of_queue = 10, satellite_emails = ["EMAIL_USED_BY_SATELLITE_FRAME"] )
 
   # pull attachments
-  gmail_inbox.pull_attachments(userID='me')
+  gmail_inbox.pull_attachments(target=target)
 
   # get the image to send
-  image_to_send, output_text = gmail_inbox.grab_first_image(initiator=initiator, userID = 'me')
+  image_to_send, output_text = gmail_inbox.display_from_queue(target=target)
  
   #transform image into a low res format for the eink screen
   transformed_image = Image_transform(imported_image=image_to_send, fit="crop", message=output_text)
@@ -112,7 +109,7 @@ def api_route_satellite_frame():
      return flask.redirect('authorize')
 
   #pull and display image
-  output = pull_and_display_image(initiator = "satellite_frame", creds = credentials)
+  output = pull_and_display_image(target = "satellite_frame", creds = credentials)
   return send_file(output, mimetype="image/png")
 
 
@@ -131,7 +128,7 @@ def api_route_earth_frame():
      return flask.redirect('authorize')
 
   #pull and display image
-  output = pull_and_display_image(initiator = "earth_frame", creds = credentials)
+  output = pull_and_display_image(target = "earth_frame", creds = credentials)
   return send_file(output, mimetype="image/png")
 
 

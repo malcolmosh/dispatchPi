@@ -79,7 +79,9 @@ class Image_transform:
         
         #print text on top of image
         #set font
-        font = ImageFont.truetype(os.path.join("./fonts", "Roboto-Medium.ttf"), 25)
+        # find script directory
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        font = ImageFont.truetype(os.path.join(dir_path, "fonts", "Roboto-Medium.ttf"), 25)
         
         message = textwrap.fill(self.message,width=25)
         

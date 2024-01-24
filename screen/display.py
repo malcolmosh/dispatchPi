@@ -17,7 +17,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 log_file_path = os.path.join(dir_path, "image_log.log")
 
 # initialize logger - you can change it to debut to print the "debug" logging statements if encountering any errors
-logging.basicConfig(filename=log_file_path, level=logging.INFO)
+logging.basicConfig(filename=log_file_path, 
+                    level=logging.INFO, 
+                    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',)
 
 #function to display image
 def show_image(image):
