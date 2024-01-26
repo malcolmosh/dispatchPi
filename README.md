@@ -3,7 +3,7 @@
 
 <img src="https://i.imgur.com/E302Bw2.jpg|width=100px" width="200">
 
-##[Follow the complete tutorial here!](https://malcolmosh.github.io/projects/2_dispatchpi/)
+## [Follow the complete tutorial here!](https://malcolmosh.github.io/projects/2_dispatchpi/)
 
 The e-ink frame displays an image pulled from a fixed URL at regular intervals. At this URL resides a Flask app hosted on Google Cloud Run. Whenever it is pinged, it pulls the latest image received in a Gmail inbox and overlays text extracted from that same message. 
 
